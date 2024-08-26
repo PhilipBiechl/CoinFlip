@@ -34,10 +34,14 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -60,25 +64,47 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CoinFlip_VQS01Theme {
+                var coinstate = remember { mutableStateOf((0..1).random()) }
+                val coinFace = when(coinstate.value) {
+                    0 -> R.drawable.coinback
+                    else -> R.drawable.coinfront
+                }
+
                 Box(
                     modifier = Modifier
+                        .clickable(
+                            enabled = true,
+                            onClick = {
+                                coinstate.value = (0..1).random()
+                                Log.i("TAG", "coinFace: $coinFace, coinState: $coinstate \n back: ${R.drawable.coinback} front: ${R.drawable.coinfront}")
+                            })
                         .fillMaxSize()
-                        .background(color = Color.DarkGray)
+                        .background(color = Color.Cyan)
                 ) {
                     ResetButton()
-                    CoinView()
 
-                    if (1 == 1) {
-                        Box(
+                    Box(
+                        modifier = Modifier
+                            .align(alignment = Alignment.Center)
+                    ) {
+                        Column (
                             modifier = Modifier
-                                .align(alignment = Alignment.Center)
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Press to flip the coin!",
-                                fontSize = 20.sp,
-                                fontStyle = FontStyle.Italic,
-                                color = Color.LightGray,
-                            )
+                            CoinView(coinFace)
+
+                            if (1 == 1) {
+                                Text(
+                                    text = "Press to flip the coin!",
+                                    fontSize = 20.sp,
+                                    fontStyle = FontStyle.Italic,
+                                    color = Color.DarkGray,
+                                    modifier = Modifier
+                                        .padding(top = 60.dp)
+                                )
+                            }
                         }
                     }
                     
@@ -173,6 +199,14 @@ fun BottomButton() {
 }
 
 @Composable
-fun CoinView() {
-    /* TO DO */
+fun CoinView(coinFace: Int) {
+    Image(
+        painter = painterResource(id = coinFace),
+        contentDescription = "CoinFront",
+        //contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .size(250.dp)
+            .clip(CircleShape),
+        alignment = Alignment.Center
+    )
 }
