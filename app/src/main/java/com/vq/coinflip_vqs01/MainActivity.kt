@@ -33,22 +33,37 @@ import androidx.compose.ui.res.imageResource
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.annotation.Nullable
+import androidx.compose.animation.animateColor
 //import androidx.compose.animation.core.animateFloatAsState
 //import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.layout.FlowRowScopeInstance.align
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Snackbar
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role.Companion.Image
@@ -58,18 +73,25 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.coroutineScope
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import kotlin.math.absoluteValue
 import kotlin.math.log
+import kotlin.math.round
 import kotlin.random.Random
+import kotlinx.coroutines.delay
 
 
 class MainActivity : ComponentActivity() {
 
     // change Type of following vars to what they become
+
     private var headCounts: Int = 0
     private var numCounts: Int = 0
     private var setInState: Int = 0
@@ -79,9 +101,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val viewModel by viewModels<ViewFunction>()
+        val setFunButton by mutableStateOf(viewModel.settingsViewColOpen)
+
         enableEdgeToEdge()
         setContent {
-            GeneralSite()
+            GeneralSite(viewModel)
         }
     }
 }
@@ -160,126 +186,339 @@ CoinFlip_VQS01Theme {
 
 // TO DO: Alles ab hier einzelne Elemente -> in einzelne Files übertragen!
 
-@Preview
+//@Preview
 @Composable
-fun GeneralSite() {
+fun GeneralSite( viewModel: ViewFunction ) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val backgroundAnimC1 = infiniteTransition.animateColor(
+        Color(0xFF64B5F6), Color(0xFF64B5F6),
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 30000
+                Color(0xff50a9f2) at 10000
+                Color(0x5394c9) at 20000
+            }
+        )
+    ).value
+    val backgroundAnimC2 = infiniteTransition.animateColor(
+        Color(0xFF0D47A1), Color(0xFF0D47A1),
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 45000
+                Color(0xFF093d8f) at 15000
+                Color(0xFF133d80) at 30000
+            }
+        )
+    ).value
     Box(
         modifier = Modifier
-            .clickable(
-                enabled = true,
-                onClick = {
-                    Log.i("TAG", "Hi")
-                })
             .fillMaxSize()
-            .background(color = Color.Cyan)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        backgroundAnimC1,
+                        backgroundAnimC2
+                    )
+                )
+            )
     ) {
         Column (
             modifier = Modifier
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopLine()
+            TopLine(viewModel)
             MiddleField()
-            BottomBar()
+            BottomBar(viewModel)
         }
-        if (true)
-            OptionsDialog()
+        if (viewModel.settingsViewColOpen > 0 && viewModel.settingsViewColOpen < 4)
+            Box(modifier = Modifier.fillMaxSize(), Alignment.Center) {
+                OptionsDialog(viewModel)
+            }
+
     }
 }
 
 @Composable
-fun TopLine() {
-    Box(modifier = Modifier.padding(end = 30.dp, top = 30.dp), Alignment.TopEnd) {
-        SingleIconButton(0, 0, "0")
+fun TopLine(viewModel: ViewFunction) {
+    Box (
+        modifier = Modifier
+            .padding(end = 30.dp, top = 30.dp)
+            .fillMaxWidth()
+            .fillMaxHeight(0.15f),
+        Alignment.TopEnd
+    ) {
+        SingleIconButton(10, 0, viewModel)
     }
 }
 
 @Composable
 fun MiddleField() {
-    Box(modifier = Modifier, Alignment.Center) {
-        CoinView()
-    }
-    Box(modifier = Modifier.padding(top = 50.dp), Alignment.Center) {
-        Text(text = "click to spin...")
-    }
-}
+    val ctx = LocalContext.current
+    Column (
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.8f)
+            .clickable(
+                enabled = true,
+                onClick = {
+                    Toast
+                        .makeText(ctx, "Info: Coin Flipped", Toast.LENGTH_SHORT)
+                        .show()
 
-@Composable
-fun BottomBar() {
-    Row (
-        modifier = Modifier, horizontalArrangement = Arrangement.SpaceBetween
+                })
     ) {
-        SingleIconButton(0, 0, "0")
-        SingleIconButton(0, 0, "0")
-        SingleIconButton(0, 0, "0")
-    }
-}
-
-@Composable
-fun OptionsDialog() {
-    Box(modifier = Modifier
-        .fillMaxWidth(0.9f)
-        .fillMaxHeight(0.7f)
-        .background(Color(0xffffffa5)),
-        Alignment.Center
-    ) {
-        when (1) {
-            1 -> ColorChangeDialog()
-            2 -> ButtonFaceDialog()
-            else -> GeneralOptionsOverview()
+        Box (
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.7f),
+            Alignment.Center
+        ) {
+            CoinView()
+        }
+        Box (
+            modifier = Modifier
+                .padding(top = 50.dp)
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            Alignment.Center
+        ) {
+            Text (
+                "Click on the screen to flip a coin!",
+                style = TextStyle(
+                    color = Color(0xadadfdfdfd)
+                ),
+                textAlign = TextAlign.Center,
+                fontSize = 20.sp
+            )
         }
     }
 }
 
 @Composable
-fun ColorChangeDialog() {
-    // in Color Change
+fun BottomBar(viewModel: ViewFunction) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SingleIconButton(1, 0, viewModel)
+        SingleIconButton(2, 0, viewModel)
+        SingleIconButton(3, 0, viewModel)
+    }
 }
 
 @Composable
-fun ButtonFaceDialog() {
-    // in Button Face Change
+fun OptionsDialog(
+    viewModel: ViewFunction
+) {
+    Box (
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .fillMaxHeight(0.7f)
+            .clip(RoundedCornerShape(50.dp))
+            .background(Color(0xffffff).copy(alpha = 0.85f)),
+        Alignment.Center
+    ) {
+        when (viewModel.settingsViewColOpen) {
+            1 -> ColorChangeDialog(viewModel)
+            2 -> ButtonFaceDialog(viewModel)
+            else -> GeneralOptionsOverview(viewModel)
+        }
+    }
 }
 
 @Composable
-fun GeneralOptionsOverview() {
-    // siaht ma no, was do ine kummt...
+fun ColorChangeDialog(viewModel: ViewFunction) {
+    LazyVerticalGrid(
+        modifier = Modifier
+            .padding(20.dp),
+        columns = GridCells.Fixed(2),
+        verticalArrangement = Arrangement.SpaceBetween,
+        //horizontalArrangement = Arrangement.SpaceEvenly,
+        content = {
+            items(8) { i ->
+                SingleIconButton((100 + i), 0, viewModel, 150, 15, 20, Color(0xFFFD2323))
+            }
+        }
+    )
 }
 
 @Composable
-fun SelectionField() {
-    // Buttons für Auswahl in Menüs
+fun ButtonFaceDialog(viewModel: ViewFunction) {
+    LazyVerticalGrid(
+        modifier = Modifier
+            .padding(20.dp),
+        columns = GridCells.Fixed(2),
+        verticalArrangement = Arrangement.SpaceBetween,
+        //horizontalArrangement = Arrangement.SpaceEvenly,
+        content = {
+            items(8) { i ->
+                SingleIconButton((100 + i), 0, viewModel, 150, 15, 20, Color(0xFF26A699))
+            }
+        }
+    )
 }
+
+@Composable
+fun GeneralOptionsOverview(viewModel: ViewFunction) {
+    LazyVerticalGrid(
+        modifier = Modifier
+            .padding(20.dp),
+        columns = GridCells.Fixed(2),
+        verticalArrangement = Arrangement.SpaceBetween,
+        //horizontalArrangement = Arrangement.SpaceEvenly,
+        content = {
+            items(8) { i ->
+                SingleIconButton((100 + i), 0, viewModel, 150, 15, 20, Color(0xFF26A699))
+            }
+        }
+    )
+}
+
+/*@Composable
+fun SelectionField(viewModel: ViewFunction) {
+    SingleIconButton(onClickVal = 20, painterResourceVal = 0, viewModel = viewModel)
+}*/
 
 @Composable
 fun SingleIconButton(
     onClickVal: Int?,
     painterResourceVal: Int?,
-    descriptionVal: String?
+    viewModel: ViewFunction,
+    sizerad: Int = 110,
+    sizepaddver: Int = 0,
+    sizepaddhor: Int = 0,
+    colorVal: Color = Color(0xFF26A699),
 ) {
     val ctx = LocalContext.current
-    Button(onClick = {
-        Toast.makeText(ctx, "Info: Button pressed", Toast.LENGTH_SHORT).show()
-    }) {
+    Button(
+        onClick = {
+            when (onClickVal) {
+                1 -> viewModel.ButtonOne()
+                2 -> viewModel.ButtonTwo()
+                3 -> viewModel.ButtonTre()
+                else -> viewModel.ButtonReload()
+            }
+                  },
+        colors = ButtonDefaults.buttonColors(containerColor = colorVal),
+        modifier = Modifier
+            .size(width = sizerad.dp, height = sizerad.dp)
+            .padding(horizontal = sizepaddhor.dp, vertical = sizepaddver.dp)
+    ) {
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground),
             contentDescription = "Image",
             modifier = Modifier
-                .height(40.dp)
-                .width(40.dp)
+                .fillMaxSize()
         )
     }
 }
 
 @Composable
 fun CoinView() {
-    // this is the view of the coin...
+    val coinFace = R.drawable.coinfront
+    val coinBack = R.drawable.coinback
+    var CoinSideF: Int
+    var CoinSideB: Int
+
+    var CoinVisable by remember { mutableStateOf(coinFace) }
+
+    var coinSize by remember { mutableStateOf(250) }
+    var isFlipping by remember { mutableStateOf(false) }
+    var animDirection by remember { mutableStateOf(1) }
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val rotationAngle = infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = if (animDirection == 1) 360f else -360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1000,
+                easing = LinearEasing
+            )
+        )
+    )
+    val coinSizeAnimation = infiniteTransition.animateValue(
+        initialValue = 250.dp,
+        targetValue = 400.dp,
+        typeConverter = Dp.VectorConverter,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 2000
+                250.dp at 0 with LinearEasing
+                400.dp at 1000 with LinearEasing
+                250.dp at 2000 with LinearEasing
+            }
+        )
+    )
+
+
+    LaunchedEffect(isFlipping) {
+        if (isFlipping == true) {
+            CoinSideF = coinFace
+            CoinSideB = coinBack
+
+            CoinVisable = CoinSideF
+            delay(500)
+            CoinVisable = CoinSideB
+            delay(500)
+            CoinVisable = CoinSideF
+            delay(500)
+            CoinVisable = CoinSideB
+            delay(500)
+
+            CoinSideF = if ((0..1).random() == 1) coinFace else coinBack
+            CoinSideB = if (CoinSideF == coinBack) coinFace else coinBack
+
+            animDirection *= -1
+
+            CoinVisable = CoinSideF
+            delay(300)
+            CoinVisable = CoinSideB
+            delay(500)
+            CoinVisable = CoinSideF
+            delay(500)
+            CoinVisable = CoinSideB
+            delay(500)
+
+
+            isFlipping = false
+            animDirection *= -1
+        }
+    }
+
+
+    Image (
+        modifier = Modifier
+            .size(coinSize.dp)
+            .clickable(
+                enabled = true,
+                onClick = {
+                    isFlipping = !isFlipping
+                }
+            )
+            .graphicsLayer {
+                if (isFlipping) {
+                    rotationX = rotationAngle.value
+                }
+            }
+            /*.graphicsLayer {
+                rotationX = rotationValX.value
+                translationX = positionValX.value
+            }*/
+            .clip(CircleShape),
+        painter = painterResource(id = CoinVisable),
+        contentDescription = "Hello",
+    )
 }
 
 
 
 
-
+/*
 
 @Composable
 fun ResetButton() {
@@ -461,4 +700,4 @@ fun CoinView(
             alignment = Alignment.Center
         )
     }
-}
+}*/
