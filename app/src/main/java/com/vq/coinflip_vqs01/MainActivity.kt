@@ -42,6 +42,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -103,7 +104,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val viewModel by viewModels<ViewFunction>()
-        val setFunButton by mutableStateOf(viewModel.settingsViewColOpen)
 
         enableEdgeToEdge()
         setContent {
@@ -112,78 +112,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/*
-
-CoinFlip_VQS01Theme {
-                var coinstate = remember { mutableStateOf((0..1).random()) }
-                val coinBack = R.drawable.coinback
-                val coinFace = R.drawable.coinfront
-
-                Box(
-                    modifier = Modifier
-                        .clickable(
-                            enabled = true,
-                            onClick = {
-                                Log.i("TAG", "Hi")
-                            })
-                        .fillMaxSize()
-                        .background(color = Color.Cyan)
-                ) {
-                    ResetButton()
-
-                    Box(
-                        modifier = Modifier
-                            .align(alignment = Alignment.Center)
-                    ) {
-                        Column (
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            CoinView(coinFace, coinBack, 100f)
-
-                            if (1 == 1) {
-                                Text(
-                                    text = "Press to flip the coin!",
-                                    fontSize = 20.sp,
-                                    fontStyle = FontStyle.Italic,
-                                    color = Color.DarkGray,
-                                    modifier = Modifier
-                                        .padding(top = 60.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Row (
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(alignment = Alignment.BottomCenter)
-                            .padding(bottom = 25.dp),
-                        Arrangement.SpaceAround
-                    ) {
-                        BottomButton()
-                        BottomButton()
-                        BottomButton()
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 25.dp)
-                        .padding(top = 150.dp, bottom = 200.dp)
-                        .background(color = Color.White),
-                    /* shape TO DO */
-                ){
-
-                }
-            }
-
-
-*/
-
-
 // TO DO: Alles ab hier einzelne Elemente -> in einzelne Files übertragen!
 
 //@Preview
@@ -191,22 +119,22 @@ CoinFlip_VQS01Theme {
 fun GeneralSite( viewModel: ViewFunction ) {
     val infiniteTransition = rememberInfiniteTransition()
     val backgroundAnimC1 = infiniteTransition.animateColor(
-        Color(0xFF64B5F6), Color(0xFF64B5F6),
+        viewModel.ColDefine02, viewModel.ColDefine02,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 30000
-                Color(0xff50a9f2) at 10000
-                Color(0x5394c9) at 20000
+                viewModel.ColDefine03 at 10000
+                viewModel.ColDefine04 at 20000
             }
         )
     ).value
     val backgroundAnimC2 = infiniteTransition.animateColor(
-        Color(0xFF0D47A1), Color(0xFF0D47A1),
+        viewModel.ColDefine05, viewModel.ColDefine05,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 45000
-                Color(0xFF093d8f) at 15000
-                Color(0xFF133d80) at 30000
+                viewModel.ColDefine06 at 15000
+                viewModel.ColDefine07 at 30000
             }
         )
     ).value
@@ -228,14 +156,18 @@ fun GeneralSite( viewModel: ViewFunction ) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             TopLine(viewModel)
-            MiddleField()
+            MiddleField(viewModel)
             BottomBar(viewModel)
         }
-        if (viewModel.settingsViewColOpen > 0 && viewModel.settingsViewColOpen < 4)
+        if (viewModel.settingsViewColOpen > 0 && viewModel.settingsViewColOpen < 4) {
             Box(modifier = Modifier.fillMaxSize(), Alignment.Center) {
                 OptionsDialog(viewModel)
             }
-
+        } else {
+            if (viewModel.gameRunningAndRemember == 1) {
+                HistoryField(viewModel)
+            }
+        }
     }
 }
 
@@ -248,25 +180,17 @@ fun TopLine(viewModel: ViewFunction) {
             .fillMaxHeight(0.15f),
         Alignment.TopEnd
     ) {
-        SingleIconButton(10, 0, viewModel)
+        SingleIconButton(10, viewModel)
     }
 }
 
 @Composable
-fun MiddleField() {
+fun MiddleField(viewModel: ViewFunction) {
     val ctx = LocalContext.current
     Column (
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.8f)
-            .clickable(
-                enabled = true,
-                onClick = {
-                    Toast
-                        .makeText(ctx, "Info: Coin Flipped", Toast.LENGTH_SHORT)
-                        .show()
-
-                })
     ) {
         Box (
             modifier = Modifier
@@ -274,23 +198,25 @@ fun MiddleField() {
                 .fillMaxHeight(0.7f),
             Alignment.Center
         ) {
-            CoinView()
+            CoinView(viewModel)
         }
-        Box (
-            modifier = Modifier
-                .padding(top = 50.dp)
-                .fillMaxWidth()
-                .fillMaxHeight(),
-            Alignment.Center
-        ) {
-            Text (
-                "Click on the screen to flip a coin!",
-                style = TextStyle(
-                    color = Color(0xadadfdfdfd)
-                ),
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp
-            )
+        if (viewModel.gameRunningAndRemember == 0) {
+            Box (
+                modifier = Modifier
+                    .padding(top = 50.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                Alignment.Center
+            ) {
+                Text (
+                    "Click on the screen to flip a coin!",
+                    style = TextStyle(
+                        color = viewModel.ColDefine08
+                    ),
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp
+                )
+            }
         }
     }
 }
@@ -304,9 +230,9 @@ fun BottomBar(viewModel: ViewFunction) {
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SingleIconButton(1, 0, viewModel)
-        SingleIconButton(2, 0, viewModel)
-        SingleIconButton(3, 0, viewModel)
+        SingleIconButton(1, viewModel)
+        SingleIconButton(2, viewModel)
+        SingleIconButton(3, viewModel)
     }
 }
 
@@ -319,7 +245,7 @@ fun OptionsDialog(
             .fillMaxWidth(0.9f)
             .fillMaxHeight(0.7f)
             .clip(RoundedCornerShape(50.dp))
-            .background(Color(0xffffff).copy(alpha = 0.85f)),
+            .background(viewModel.ColDefine01.copy(alpha = 0.85f)),
         Alignment.Center
     ) {
         when (viewModel.settingsViewColOpen) {
@@ -332,6 +258,16 @@ fun OptionsDialog(
 
 @Composable
 fun ColorChangeDialog(viewModel: ViewFunction) {
+    val colorPalette = arrayOf(
+        viewModel.ColDefine01,
+        viewModel.ColDefine02,
+        viewModel.ColDefine03,
+        viewModel.ColDefine04,
+        viewModel.ColDefine05,
+        viewModel.ColDefine06,
+        viewModel.ColDefine07,
+        viewModel.ColDefine08,
+    )
     LazyVerticalGrid(
         modifier = Modifier
             .padding(20.dp),
@@ -340,7 +276,12 @@ fun ColorChangeDialog(viewModel: ViewFunction) {
         //horizontalArrangement = Arrangement.SpaceEvenly,
         content = {
             items(8) { i ->
-                SingleIconButton((100 + i), 0, viewModel, 150, 15, 20, Color(0xFFFD2323))
+                SingleIconButton((100 + i),
+                    viewModel,
+                    150,
+                    15,
+                    20,
+                    colorPalette.get(i))
             }
         }
     )
@@ -356,7 +297,14 @@ fun ButtonFaceDialog(viewModel: ViewFunction) {
         //horizontalArrangement = Arrangement.SpaceEvenly,
         content = {
             items(8) { i ->
-                SingleIconButton((100 + i), 0, viewModel, 150, 15, 20, Color(0xFF26A699))
+                SingleIconButton(
+                    (100 + 2*i),
+                    viewModel,
+                    150,
+                    15,
+                    20,
+                    Color(0xFF26A699),
+                    viewModel.CoinFaceDefine[2*i])
             }
         }
     )
@@ -372,26 +320,89 @@ fun GeneralOptionsOverview(viewModel: ViewFunction) {
         //horizontalArrangement = Arrangement.SpaceEvenly,
         content = {
             items(8) { i ->
-                SingleIconButton((100 + i), 0, viewModel, 150, 15, 20, Color(0xFF26A699))
+                SingleIconButton((100 + i), viewModel, 150, 15, 20, Color(0xFF26A699))
             }
         }
     )
 }
 
-/*@Composable
-fun SelectionField(viewModel: ViewFunction) {
-    SingleIconButton(onClickVal = 20, painterResourceVal = 0, viewModel = viewModel)
-}*/
+@Composable
+fun HistoryField(viewModel: ViewFunction) {
+    Row (
+        modifier = Modifier
+            .padding(top = 50.dp)
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .padding(bottom = 175.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Column (
+            modifier = Modifier
+                .fillMaxWidth(0.4f)
+                .fillMaxHeight(0.1f)
+                .clip(RoundedCornerShape(10.dp))
+                .background(viewModel.ColDefine01.copy(alpha = 0.7f)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text (
+                viewModel.numberOfFront.toString(),
+                style = TextStyle(
+                    color = viewModel.ColDefine00.copy(alpha = 0.7f),
+                    fontWeight = FontWeight(weight = 600)
+                ),
+                textAlign = TextAlign.Center,
+                fontSize = 30.sp
+            )
+            Text (
+                "Numbers",
+                style = TextStyle(
+                    color = viewModel.ColDefine00.copy(alpha = 0.7f)
+                ),
+                textAlign = TextAlign.Center,
+                fontSize = 20.sp
+            )
+        }
+        Column (
+            modifier = Modifier
+                .fillMaxWidth(0.65f)
+                .fillMaxHeight(0.1f)
+                .clip(RoundedCornerShape(10.dp))
+                .background(viewModel.ColDefine01.copy(alpha = 0.7f)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text (
+                viewModel.numberOfBack.toString(),
+                style = TextStyle(
+                    color = viewModel.ColDefine00.copy(alpha = 0.7f),
+                    fontWeight = FontWeight(weight = 600)
+                ),
+                textAlign = TextAlign.Center,
+                fontSize = 30.sp
+            )
+            Text (
+                "Heads",
+                style = TextStyle(
+                    color = viewModel.ColDefine00.copy(alpha = 0.7f)
+                ),
+                textAlign = TextAlign.Center,
+                fontSize = 20.sp
+            )
+        }
+    }
+}
 
 @Composable
 fun SingleIconButton(
-    onClickVal: Int?,
-    painterResourceVal: Int?,
+    onClickVal: Int = 10000,
     viewModel: ViewFunction,
     sizerad: Int = 110,
     sizepaddver: Int = 0,
     sizepaddhor: Int = 0,
-    colorVal: Color = Color(0xFF26A699),
+    colorVal: Color = viewModel.ColDefine09,
+    painterResourceVal: Int = R.drawable.ic_launcher_foreground,
 ) {
     val ctx = LocalContext.current
     Button(
@@ -400,6 +411,7 @@ fun SingleIconButton(
                 1 -> viewModel.ButtonOne()
                 2 -> viewModel.ButtonTwo()
                 3 -> viewModel.ButtonTre()
+                in(100..190) -> viewModel.ButtonCoin(onClickVal)
                 else -> viewModel.ButtonReload()
             }
                   },
@@ -409,25 +421,25 @@ fun SingleIconButton(
             .padding(horizontal = sizepaddhor.dp, vertical = sizepaddver.dp)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            painter = painterResource(id = painterResourceVal),
             contentDescription = "Image",
             modifier = Modifier
                 .fillMaxSize()
+                .clip(CircleShape),
         )
     }
 }
 
 @Composable
-fun CoinView() {
-    val coinFace = R.drawable.coinfront
-    val coinBack = R.drawable.coinback
+fun CoinView(viewModel: ViewFunction) {
+    var coinFace = viewModel.CoinFaceDefine[viewModel.activeCoinFace]
+    var coinBack: Int
     var CoinSideF: Int
     var CoinSideB: Int
 
     var CoinVisable by remember { mutableStateOf(coinFace) }
 
     var coinSize by remember { mutableStateOf(250) }
-    var isFlipping by remember { mutableStateOf(false) }
     var animDirection by remember { mutableStateOf(1) }
 
     val infiniteTransition = rememberInfiniteTransition()
@@ -456,8 +468,11 @@ fun CoinView() {
     )
 
 
-    LaunchedEffect(isFlipping) {
-        if (isFlipping == true) {
+    LaunchedEffect(viewModel.isFlipping) {
+        if (viewModel.isFlipping == true) {
+            coinFace = viewModel.CoinFaceDefine[viewModel.activeCoinFace]
+            coinBack = viewModel.CoinFaceDefine[viewModel.activeCoinFace + 1]
+
             CoinSideF = coinFace
             CoinSideB = coinBack
 
@@ -485,11 +500,10 @@ fun CoinView() {
             delay(500)
 
 
-            isFlipping = false
+            viewModel.isFlipping = false
             animDirection *= -1
         }
     }
-
 
     Image (
         modifier = Modifier
@@ -497,26 +511,19 @@ fun CoinView() {
             .clickable(
                 enabled = true,
                 onClick = {
-                    isFlipping = !isFlipping
+                    viewModel.isFlipping = !viewModel.isFlipping
                 }
             )
             .graphicsLayer {
-                if (isFlipping) {
+                if (viewModel.isFlipping) {
                     rotationX = rotationAngle.value
                 }
             }
-            /*.graphicsLayer {
-                rotationX = rotationValX.value
-                translationX = positionValX.value
-            }*/
             .clip(CircleShape),
         painter = painterResource(id = CoinVisable),
         contentDescription = "Hello",
     )
 }
-
-
-
 
 /*
 
