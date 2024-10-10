@@ -1,12 +1,7 @@
 package com.vq.coinflip_vqs01
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.res.Resources
-import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 
 /* TO-DO: Make color vals vor bg and buttons, make extra button funs, make buttons round ;),
@@ -74,12 +69,12 @@ class ViewFunction: ViewModel() {
     )
 
     val BGColDefine06 = arrayOf(
-        Color(0xFF64B5F6),
-        Color(0xFF50A9F2),
-        Color(0xFF5394C9),
-        Color(0xFF0D47A1),
-        Color(0xFF093d8f),
-        Color(0xFF133d80),
+        Color(0xFFFFFDDD),
+        Color(0xFFFDDDDD),
+        Color(0xFFDDDDDD),
+        Color(0xFFAAADDD),
+        Color(0xFFABBDDD),
+        Color(0xFFBBBDDD),
     )
 
     val BGColDefine07 = arrayOf(
@@ -99,6 +94,20 @@ class ViewFunction: ViewModel() {
         Color(0xFF093d8f),
         Color(0xFF133d80),
     )
+
+    val BGColSelection = arrayOf(
+        BGColDefine01,
+        BGColDefine02,
+        BGColDefine03,
+        BGColDefine04,
+        BGColDefine05,
+        BGColDefine06,
+        BGColDefine07,
+        BGColDefine08,
+    )
+    var BGSelector by mutableStateOf(0)
+
+    // Colors End
 
     val CoinFaceDefine = intArrayOf(
         R.drawable.a1,
@@ -122,17 +131,12 @@ class ViewFunction: ViewModel() {
     var activeCoinFace by mutableIntStateOf(0)
     var isFlipping by mutableStateOf(false)
 
-    var CoinFrontAbsolute by mutableStateOf(CoinFaceDefine[activeCoinFace])
-    var CoinBackAbsolute by mutableStateOf(CoinFaceDefine[activeCoinFace + 1])
-
-    // Colors End
-
-    var gameRunningAndRemember by mutableStateOf(0)
-    var settingsViewColOpen by mutableStateOf(0)
-    //private set
-
+    var coinFlipShowInfo by mutableStateOf(false)
     var numberOfFront by mutableStateOf(0)
     var numberOfBack by mutableStateOf(0)
+
+    var settingsViewColOpen by mutableStateOf(0)
+    //private set
 
     fun ButtonOne() {
         if (settingsViewColOpen == 0)
@@ -161,11 +165,18 @@ class ViewFunction: ViewModel() {
         isFlipping = true
     }
 
-    fun ButtonBack() {
-        settingsViewColOpen = 0
+    fun BGSelectorfun(inVal: Int) {
+        BGSelector = (inVal - 200)
+        ButtonBack()
     }
 
-    fun ButtonReload() {
-        gameRunningAndRemember = if(gameRunningAndRemember == 1) 0 else 1
+    fun ButtonReset() {
+        coinFlipShowInfo = false
+        numberOfBack = 0
+        numberOfFront = 0
+    }
+
+    fun ButtonBack() {
+        settingsViewColOpen = 0
     }
 }
